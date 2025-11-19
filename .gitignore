@@ -1,0 +1,42 @@
+# =======================
+# Nix / NixOS / Shell
+# =======================
+result/
+*.drv
+*.nar
+*.lock
+
+# =======================
+# Elixir / Phoenix
+# =======================
+/backend/_build/
+ /backend/deps/
+/backend/priv/repo/*.dump
+/backend/mix.lock
+
+# =======================
+# Node / Bun / Frontend
+# =======================
+/mychat/node_modules/
+/mychat/.bun/
+/mychat/dist/
+/mychat/.cache/
+/mychat/package-lock.json
+/mychat/yarn.lock
+/mychat/bun.lockb
+
+# =======================
+# IDEs
+# =======================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# =======================
+# System
+# =======================
+.DS_Store
+Thumbs.db
