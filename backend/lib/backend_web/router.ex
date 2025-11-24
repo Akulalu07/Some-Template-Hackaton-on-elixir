@@ -5,9 +5,16 @@ defmodule BackendWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/api", BackendWeb do
-    pipe_through :api
-  end
+scope "/api", BackendWeb do
+  pipe_through :api
+
+  get "/posts", PostController, :index
+  post "/posts", PostController, :create
+  get "/posts/:id", PostController, :show
+  put "/posts/:id", PostController, :update
+  delete "/posts/:id", PostController, :delete
+end
+
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:backend, :dev_routes) do
