@@ -1,0 +1,79 @@
+---
+interface Props {
+  post: {
+    id: number;
+    title: string;
+    body: string;
+  };
+}
+
+const { post } = Astro.props;
+const API_URL = import.meta.env.PUBLIC_API_URL;
+---
+
+<article class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group">
+    <div class="card-body">
+        <div class="flex justify-between items-start">
+            <h3 class="card-title text-2xl">{post.title}</h3>
+            <div class="badge badge-primary badge-outline">#{post.id}</div>
+        </div>
+        
+        <p class="text-base-content/80 whitespace-pre-wrap py-2">{post.body}</p>
+        
+        <div class="card-actions justify-end items-center mt-2">
+            <button 
+                class="delete-btn btn btn-error btn-sm btn-outline gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                data-id={post.id}
+                title="Удалить пост">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Удалить
+            </button>
+        </div>
+    </div>
+</article>
+
+<script define:vars={{ API_URL }}>
+    const buttons = document.querySelectorAll('.delete-btn');
+  
+    buttons.forEach(btn => {
+        if (btn.dataset.listener) return;
+        btn.dataset.listener = "true";
+
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            if (!confirm('Вы уверены, что хотите удалить этот пост? Это действие нельзя отменить.')) {
+                return;
+            }
+
+            const id = btn.dataset.id;
+            const originalText = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading loading-spinner loading-xs"></span>';
+      
+            try {
+                const res = await fetch(`${API_URL}/posts/${id}`, { method: 'DELETE' });
+                
+                if (res.ok) {
+                    btn.closest('article').style.transition = 'all 0.3s ease-out';
+                    btn.closest('article').style.opacity = '0';
+                    btn.closest('article').style.transform = 'scale(0.95)';
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 300);
+                } else {
+                    throw new Error('Ошибка при удалении');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Не удалось удалить пост. Попробуйте снова.');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+    });
+</script>

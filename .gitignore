@@ -17,13 +17,16 @@ result/
 # =======================
 # Node / Bun / Frontend
 # =======================
-/mychat/node_modules/
-/mychat/.bun/
-/mychat/dist/
-/mychat/.cache/
-/mychat/package-lock.json
-/mychat/yarn.lock
-/mychat/bun.lockb
+/frontend/node_modules/
+/frontend/.bun/
+/frontend/dist/
+/frontend/.cache/
+/frontend/.astro/
+/frontend/package-lock.json
+/frontend/yarn.lock
+/frontend/bun.lockb
+/frontend/.env
+/frontend/.env.production
 
 # =======================
 # IDEs

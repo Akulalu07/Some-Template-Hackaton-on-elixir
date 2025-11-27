@@ -1,0 +1,97 @@
+---
+const API_URL = import.meta.env.PUBLIC_API_URL;
+---
+
+<div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+        <h2 class="card-title">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Создать новый пост
+        </h2>
+        <form id="create-form" class="space-y-4">
+            <div class="form-control w-full">
+                <label class="label" for="title">
+                    <span class="label-text font-semibold">Заголовок</span>
+                    <span class="label-text-alt" id="title-count">0 / 100</span>
+                </label>
+                <input type="text" id="title" placeholder="Введите заголовок" maxlength="100" class="input input-bordered input-primary w-full" required>
+            </div>
+            <div class="form-control w-full">
+                <label class="label" for="body">
+                    <span class="label-text font-semibold">Текст</span>
+                    <span class="label-text-alt" id="body-count">0 / 500</span>
+                </label>
+                <textarea id="body" placeholder="Расскажите что-нибудь интересное..." maxlength="500" class="textarea textarea-bordered textarea-primary h-32" required></textarea>
+            </div>
+            <div class="card-actions justify-between items-center">
+                <div class="text-sm opacity-60">
+                    <kbd class="kbd kbd-sm">Ctrl</kbd> + <kbd class="kbd kbd-sm">Enter</kbd> для отправки
+                </div>
+                <button class="btn btn-primary gap-2" type="submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    Опубликовать
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script define:vars={{ API_URL }}>
+    const form = document.getElementById('create-form');
+    const titleInput = document.getElementById('title');
+    const bodyInput = document.getElementById('body');
+    const titleCount = document.getElementById('title-count');
+    const bodyCount = document.getElementById('body-count');
+
+    const updateCount = (input, counter, max) => {
+        const count = input.value.length;
+        counter.textContent = `${count} / ${max}`;
+        counter.classList.toggle('text-warning', count > max * 0.8);
+        counter.classList.toggle('text-error', count === max);
+    };
+
+    titleInput?.addEventListener('input', () => updateCount(titleInput, titleCount, 100));
+    bodyInput?.addEventListener('input', () => updateCount(bodyInput, bodyCount, 500));
+
+    bodyInput?.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            form?.requestSubmit();
+        }
+    });
+
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> Отправка...';
+
+        const title = titleInput.value.trim();
+        const body = bodyInput.value.trim();
+
+        try {
+            const response = await fetch(`${API_URL}/posts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ post: { title, body } }) 
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('Ошибка при создании поста');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Не удалось создать пост. Попробуйте снова.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    });
+</script>

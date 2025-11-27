@@ -40,6 +40,7 @@ defmodule Backend.MixProject do
   defp deps do
     [
       {:phoenix, "~> 1.8.1"},
+      {:cors_plug, "~> 3.0"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.13"},
       {:postgrex, ">= 0.0.0"},

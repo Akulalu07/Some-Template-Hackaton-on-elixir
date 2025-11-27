@@ -1,11 +1,24 @@
 import Config
 
+# Я хуею с этого синтаксиса
+if File.exists?(".env") do
+  File.stream!(".env")
+  |> Stream.map(&String.trim/1)
+  |> Stream.reject(&(&1 == "" or String.starts_with?(&1, "#")))
+  |> Enum.each(fn line ->
+    case String.split(line, "=", parts: 2) do
+      [key, value] -> System.put_env(String.trim(key), String.trim(value))
+      _ -> :ok
+    end
+  end)
+end
+
 # Configure your database
 config :backend, Backend.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "backend_dev",
+  username: System.get_env("DB_USERNAME") || "postgres",
+  password: System.get_env("DB_PASSWORD") || "postgres",
+  hostname: System.get_env("DB_HOST") || "localhost",
+  database: System.get_env("DB_DATABASE") || "backend_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
