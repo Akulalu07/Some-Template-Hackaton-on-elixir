@@ -22,7 +22,6 @@ result/
 /frontend/dist/
 /frontend/.cache/
 /frontend/.astro/
-/frontend/package-lock.json
 /frontend/yarn.lock
 /frontend/bun.lockb
 /frontend/.env
