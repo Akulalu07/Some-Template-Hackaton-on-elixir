@@ -5,28 +5,20 @@ services:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
-      - --log.level=INFO
       - --api.dashboard=true
-      - --api.insecure=false
     ports:
       - "80:80"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    env_file:
-      - .env
     networks:
       - monitor
 
   postgres:
     image: postgres:17-alpine
-    env_file:
-      - .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mydb
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -34,43 +26,52 @@ services:
 
   backend:
     build: ./backend
-    env_file:
-      - .env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
-      PHX_HOST: ${BACKEND_HOST}
+      MIX_ENV: prod
+      DATABASE_URL: postgres://postgres:postgres@postgres/mydb
+      SECRET_KEY_BASE: CHANGEME
+      PHX_HOST: api.localhost
       PHX_SERVER: "true"
       PORT: 4000
     depends_on:
       - postgres
     labels:
       - traefik.enable=true
-      - traefik.http.routers.backend.rule=Host(`${BACKEND_HOST}`)
+
+      # -------- Backend domain --------
+      - traefik.http.routers.backend.rule=Host(`api.localhost`)
       - traefik.http.routers.backend.entrypoints=web
       - traefik.http.routers.backend.service=backend
       - traefik.http.services.backend.loadbalancer.server.port=4000
-      # Also route /api/* from frontend to backend
-      - traefik.http.routers.backend-api.rule=Host(`${FRONTEND_HOST}`) && PathPrefix(`/api`)
-      - traefik.http.routers.backend-api.entrypoints=web
-      - traefik.http.routers.backend-api.service=backend
+
+      # -------- CORS middleware --------
+      - traefik.http.middlewares.backend-cors.headers.accessControlAllowOriginList=*
+      - traefik.http.middlewares.backend-cors.headers.accessControlAllowMethods=GET,POST,PUT,PATCH,DELETE,OPTIONS
+      - traefik.http.middlewares.backend-cors.headers.accessControlAllowHeaders=*
+      - traefik.http.middlewares.backend-cors.headers.accessControlAllowCredentials=true
+
+      # attaches middleware
+      - traefik.http.routers.backend.middlewares=backend-cors
     networks:
       - monitor
 
   frontend:
     build: ./frontend
-    env_file:
-      - .env
     environment:
-      API_URL: ${API_URL}
-      PUBLIC_API_URL: ${PUBLIC_API_URL}
-    depends_on:
-      - backend
+      PUBLIC_API_URL: http://api.localhost/api
     labels:
       - traefik.enable=true
-      - traefik.http.routers.frontend.rule=Host(`${FRONTEND_HOST}`)
+
+      # frontend served on app.localhost
+      - traefik.http.routers.frontend.rule=Host(`app.localhost`)
       - traefik.http.routers.frontend.entrypoints=web
       - traefik.http.services.frontend.loadbalancer.server.port=4321
+
+      # ALSO proxy /api/* from frontend domain → backend
+      - traefik.http.routers.frontend-api.rule=Host(`app.localhost`) && PathPrefix(`/api`)
+      - traefik.http.routers.frontend-api.entrypoints=web
+      - traefik.http.routers.frontend-api.service=backend
+      - traefik.http.routers.frontend-api.middlewares=backend-cors
     networks:
       - monitor
 
