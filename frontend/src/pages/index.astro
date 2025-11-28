@@ -3,7 +3,13 @@ import Layout from "../layouts/Layout.astro";
 import PostCard from "../components/PostCard.astro";
 import PostForm from "../components/PostForm.astro";
 
-const API_URL = import.meta.env.PUBLIC_API_URL;
+// For server-side (SSR), use internal Docker network URL
+// For client-side, use public URL through Traefik
+// In Astro server mode, we can access process.env directly
+let API_URL = import.meta.env.PUBLIC_API_URL;
+if (typeof process !== 'undefined' && process.env.API_URL) {
+  API_URL = process.env.API_URL;
+}
 
 interface Post { id: number; title: string; body: string; }
 
@@ -11,7 +17,7 @@ let posts: Post[] = [];
 let error = null;
 
 try {
-  const response = await fetch(`${API_URL}/posts`);
+  const response = await fetch(`${API_URL}/api/posts`);
   if (!response.ok) throw new Error("Ошибка Бэка 😒");
   const json = await response.json();
   posts = json.data; 

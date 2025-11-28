@@ -8,7 +8,11 @@ interface Props {
 }
 
 const { post } = Astro.props;
-const API_URL = import.meta.env.PUBLIC_API_URL;
+// For client-side requests, use relative path (empty string)
+// For server-side requests, use internal Docker network URL
+const API_URL = typeof process !== 'undefined' && process.env.API_URL 
+  ? process.env.API_URL 
+  : '';
 ---
 
 <article class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group">
@@ -34,7 +38,7 @@ const API_URL = import.meta.env.PUBLIC_API_URL;
     </div>
 </article>
 
-<script define:vars={{ API_URL }}>
+<script define:vars={{ API_URL: API_URL || '' }}>
     const buttons = document.querySelectorAll('.delete-btn');
   
     buttons.forEach(btn => {
@@ -55,7 +59,7 @@ const API_URL = import.meta.env.PUBLIC_API_URL;
             btn.innerHTML = '<span class="loading loading-spinner loading-xs"></span>';
       
             try {
-                const res = await fetch(`${API_URL}/posts/${id}`, { method: 'DELETE' });
+                const res = await fetch(`${API_URL}/api/posts/${id}`, { method: 'DELETE' });
                 
                 if (res.ok) {
                     btn.closest('article').style.transition = 'all 0.3s ease-out';

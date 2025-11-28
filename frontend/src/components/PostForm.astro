@@ -1,5 +1,9 @@
 ---
-const API_URL = import.meta.env.PUBLIC_API_URL;
+// For client-side requests, use relative path (empty string)
+// For server-side requests, use internal Docker network URL
+const API_URL = typeof process !== 'undefined' && process.env.API_URL 
+  ? process.env.API_URL 
+  : '';
 ---
 
 <div class="card bg-base-100 shadow-xl mb-8">
@@ -40,7 +44,7 @@ const API_URL = import.meta.env.PUBLIC_API_URL;
     </div>
 </div>
 
-<script define:vars={{ API_URL }}>
+<script define:vars={{ API_URL: API_URL || '' }}>
     const form = document.getElementById('create-form');
     const titleInput = document.getElementById('title');
     const bodyInput = document.getElementById('body');
@@ -76,7 +80,7 @@ const API_URL = import.meta.env.PUBLIC_API_URL;
         const body = bodyInput.value.trim();
 
         try {
-            const response = await fetch(`${API_URL}/posts`, {
+            const response = await fetch(`${API_URL}/api/posts`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ post: { title, body } }) 

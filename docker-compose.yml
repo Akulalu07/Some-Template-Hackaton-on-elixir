@@ -1,10 +1,30 @@
 services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --log.level=INFO
+      - --api.dashboard=true
+      - --api.insecure=false
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    env_file:
+      - .env
+    networks:
+      - monitor
+
   postgres:
     image: postgres:17-alpine
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: backend_dev
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -14,22 +34,48 @@ services:
 
   backend:
     build: ./backend
-    ports:
-      - "4000:4000"
-    networks:
-      - monitor
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      PHX_HOST: ${BACKEND_HOST}
+      PHX_SERVER: "true"
+      PORT: 4000
     depends_on:
       - postgres
-  frontend: 
-    build: ./frontend
-    ports:
-      - "4321:4321"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=Host(`${BACKEND_HOST}`)
+      - traefik.http.routers.backend.entrypoints=web
+      - traefik.http.routers.backend.service=backend
+      - traefik.http.services.backend.loadbalancer.server.port=4000
+      # Also route /api/* from frontend to backend
+      - traefik.http.routers.backend-api.rule=Host(`${FRONTEND_HOST}`) && PathPrefix(`/api`)
+      - traefik.http.routers.backend-api.entrypoints=web
+      - traefik.http.routers.backend-api.service=backend
     networks:
       - monitor
+
+  frontend:
+    build: ./frontend
+    env_file:
+      - .env
+    environment:
+      API_URL: ${API_URL}
+      PUBLIC_API_URL: ${PUBLIC_API_URL}
     depends_on:
       - backend
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.frontend.rule=Host(`${FRONTEND_HOST}`)
+      - traefik.http.routers.frontend.entrypoints=web
+      - traefik.http.services.frontend.loadbalancer.server.port=4321
+    networks:
+      - monitor
 
 networks:
   monitor:
+
 volumes:
   postgres_data:
