@@ -24,7 +24,7 @@ result/
 /frontend/.astro/
 /frontend/yarn.lock
 /frontend/bun.lockb
-/frontend/.env
+#/frontend/.env
 /frontend/.env.production
 
 # =======================
