@@ -22,7 +22,8 @@ try {
   const json = await response.json();
   posts = json.data; 
 } catch (e) {
-  error = "Сосать элексир, сосать";
+  error = e instanceof Error ? e.message : "Ошибка подключения к бэкенду";
+  console.error("Fetch error:", e);
 }
 ---
 
